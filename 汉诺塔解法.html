@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+</head>
+<body>
+    <script>
+        var step = 0;
+        function hano(n, A, B, C) {
+            if (n > 0) {
+                hano(n - 1, A, C, B);
+                console.log('第' + ++step + '步: 将第 ' + n + ' 个圆盘从 ' + A + ' 移动到 ' + C);
+                hano(n - 1, B, A, C);
+            }
+        }
+        hano(4, 'A', 'B', 'C');
+    </script>
+</body>
+</html>

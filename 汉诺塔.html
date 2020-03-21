@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #eee;
+        }
+        div {
+            margin: 0 auto;
+            width: 350px;  
+        }
+        div input {
+            width: 280px;
+        }
+    </style>
+</head>
+<body>
+    <canvas>该浏览器不支持canvas显示，推荐使用谷歌浏览器</canvas>
+    <div>
+        <input type="text" placeholder="请输入你要挑战的等级：1~9">
+        <button>GO</button>
+        <p>游戏规则：</p>
+        <p>1. 点击鼠标移动圆盘，一次只能移动一个圆盘</p>
+        <p>2. 大圆盘不能叠加到小圆盘上</p>
+        <p>胜利条件：</p>
+        <p>将第一根柱子上的圆盘全部移动到第三根柱子</p>
+    </div>
+    <script>
+        var btn = document.querySelector('div button');
+        var canvas = document.querySelector('canvas');
+        var cxt = canvas.getContext('2d');
+        var col = [[], [], []]; //  存放圆盘的柱子
+        const colors = ["#33B5E5","#0099CC","#AA66CC","#9933CC","#99CC00",
+            "#669900","#FFBB33","#FF8800","#FF4444"
+        ];  //  圆盘颜色
+        var take = null;  //  鼠标拿着的圆盘
+        var lastPoint = null; //  记录鼠标离开的最后一个坐标
+        var num = -1;    //  胜利条件
+
+        window.onload = function () {
+            canvas.height = 600;
+            canvas.width = canvas.height * 2;
+            render();
+        }
+
+        canvas.onmousedown = function (e) {
+            var point = getCanvasPoint(e.clientX, e.clientY);
+            if (takeDisk(point.x, point.y)) {
+                render(point.x, point.y);
+            }
+        }
+        
+        canvas.onmousemove = function (e) {
+            if (take) {
+                var point = getCanvasPoint(e.clientX, e.clientY);
+                render(point.x, point.y);
+            }
+        }
+
+        canvas.onmouseup = function () {
+            if (take) {
+                layDownDisk();
+            }
+        }
+
+        btn.onclick = function () {
+            var input = document.querySelector('div input');
+            var val = input.value;
+            var reg = /^\d$/;
+            if (reg.test(val)) {
+                clearAll();
+                num = parseInt(val);
+                createDisks(num);
+                render();
+                input.value = '';
+            }else {
+                alert('请输入数字1~9');
+                input.value = '';
+            }
+        }
+
+        function clearAll() {
+            col = [[], [], []];
+            take = null;
+            lastPoint = {};
+        }
+
+        function render(x, y) {
+            cxt.clearRect(0, 0, canvas.width, canvas.height);
+            drawColumn();
+            drawColumnDisks();
+            drawText();
+            if (take) {
+                drawDisk(take, x, y);
+                lastPoint = {x: x, y: y};
+            }
+            if (col[2].length === num) {
+                setTimeout(function () {
+                    alert('你太强了，试下挑战下一等级');
+                    num = -1;
+                }, 10);
+            }
+        }
+
+        function takeDisk(x, y) {
+            for (let i = 0; i < 3; i++) {
+                let length = col[i].length;
+                if (length > 0) {
+                    let x1 = 200 + 400 * i - col[i][length-1].width / 2;
+                    let x2 = 200 + 400 * i + col[i][length-1].width / 2;
+                    let y1 = 540 - length * 20 - 10;
+                    let y2 = 540 - length * 20 + 10;
+                    if (x > x1 && x < x2 && y > y1 && y < y2) {
+                        take = col[i].pop();
+                        return true;
+                    }
+                }
+            }
+        }
+
+        function layDownDisk() {
+            var x1 = lastPoint.x - take.width / 2;
+            var x2 = lastPoint.x + take.width / 2;
+            var y1 = lastPoint.y - take.height / 2;
+            var y2 = lastPoint.y + take.height / 2;
+            for (let i = 0; i < 3; i++) {
+                //  注意，要将 !col[i].length 写前面
+                if (!col[i].length || take.num < col[i][col[i].length - 1].num) {
+                    let X = 200 + 400 * i;
+                    let topY = 50, bottomY = 530;
+                    if (x1 < X + 10 && x2 > X - 10 && y2 > topY && y1 < bottomY) {
+                        col[i].push(take);
+                        take = null;
+                        lastPoint = {};
+                        render();
+                        return;
+                    }
+                }
+            }
+            col[take.belong].push(take);
+            take = null;
+            lastPoint = null;
+            render();
+        }
+
+        function drawColumn() {
+            var Column = [
+                {x: 0, y: 550}, {x: 200, y: 550}, {x: 200, y: 530}, {x: 110, y: 530},
+                {x: 110, y: 50}, {x: 90, y: 50}, {x: 90, y: 530}, {x: 0, y: 530}
+            ];
+            cxt.save();
+            cxt.fillStyle = '#3f48cc';
+            for (let i = 0; i < 3; i++) {
+                cxt.beginPath();
+                for (let j = 0; j < Column.length; j++) {
+                    cxt.lineTo(Column[j].x + 100 + 400 * i, Column[j].y);
+                }
+                cxt.fill();
+                cxt.closePath();
+            }
+            cxt.restore();
+        }
+
+        function createDisks(n) {
+            while (n > 0) {
+                let disk = {
+                    num: n,
+                    width: 20 + n * 40,
+                    height: 20,
+                    color: colors[--n],
+                    belong: 0
+                };
+                col[0].push(disk);
+            }
+        }
+
+        function drawColumnDisks() {
+            for (let i = 0; i < 3; i++) {
+                if (col[i].length > 0) {
+                    for (let j = 0; j < col[i].length; j++) {
+                        drawDisk(col[i][j], 200 + 400 * i, 520 - j * 20);
+                    }
+                }
+            }
+        }
+
+        function drawDisk(disk, centerX, centerY) {
+            var x = centerX - disk.width / 2;
+            var y = centerY - disk.height / 2;
+            cxt.save();
+            cxt.fillStyle = disk.color;
+            cxt.fillRect(x, y, disk.width, disk.height);
+            cxt.restore();
+        }
+
+        function getCanvasPoint(x, y) {
+            var canvasRect = canvas.getBoundingClientRect();
+            return {
+                x: x - canvasRect.left, 
+                y: y - canvasRect.top
+            }
+        }
+
+        function drawText() {
+            cxt.save();
+            cxt.font = 'bold 30px Arial';
+            cxt.textAlign = 'center';
+            cxt.textBaseline = 'middle';
+            cxt.fillText('A', 200, 575);
+            cxt.fillText('B', 200 + 400, 575);
+            cxt.fillText('C', 200 + 400 * 2, 575);
+            cxt.restore();
+        }
+    </script>
+</body>
+</html>

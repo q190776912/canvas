@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <script>
+        window.onload = function () {
+            var canvas = document.querySelector('canvas');
+            var cxt = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 600;
+            render(cxt, canvas);
+            setInterval(function () {
+                render(cxt);
+            }, 1000)
+        }
+
+        function render(cxt) {
+            var canvas = cxt.canvas;
+            fillSky(cxt);
+            var stars = [];
+            for (let i = 0; i < 88; i++) {
+                var flag = true;
+                stars[i] = {};
+                while (flag) {
+                    flag = false;
+                    stars[i].r = Math.random() * 4 + 4;
+                    stars[i].x = stars[i].r + 2 + Math.random() * (canvas.width - 2 * (stars[i].r + 2));
+                    stars[i].y = stars[i].r + 2 + Math.random() * (canvas.height * 0.65 - 2 * (stars[i].r + 2));
+                    for (let j = 0; j < stars.length - 1; j++) {
+                        var r = stars[i].r + 2 + stars[j].r + 2;
+                        var a = (stars[i].y - stars[j].y) * (stars[i].y - stars[j].y);
+                        var b = (stars[i].x - stars[j].x) *(stars[i].x - stars[j].x);
+                        if ( r * r > a + b) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                stars[i].rotate = Math.random() * 72 * Math.PI;
+                fillStar(cxt, stars[i].x, stars[i].y, stars[i].r, '#fb3', '#fd5', stars[i].rotate);
+            }
+            fillMoon(cxt, 2, 600, 150, 66, 30);
+            drawLand(cxt, 0, 450, 350, 350, 350, 550, 800, 450);
+            fillText(cxt);
+        }
+
+        function fillSky (cxt) {
+            var canvas = cxt.canvas;
+            cxt.save();
+
+            var skyStyle = cxt.createLinearGradient(0, 0, 0, canvas.height);
+            skyStyle.addColorStop(0, '#000');
+            skyStyle.addColorStop(1, '#035');
+            cxt.fillStyle = skyStyle;
+
+            cxt.fillRect(0, 0, canvas.width, canvas.height);
+
+            cxt.restore();
+        }
+
+        function fillStar (cxt, x, y, gR, fillColor, strokeColor, rot) {
+            cxt.save();
+
+            cxt.transform(gR >> 1, 0, 0, gR >> 1, x, y);
+            cxt.rotate(rot);
+
+            cxt.strokeStyle = strokeColor;
+            cxt.fillStyle = fillColor;
+            cxt.lineJoin = 'round';
+
+            starPath(cxt);
+
+            cxt.stroke();
+            cxt.fill();
+
+            cxt.restore()
+        }
+
+        function starPath(cxt) {
+            cxt.beginPath();
+            for (let i = 0; i < 5; i++) {
+                cxt.lineTo(2 * Math.cos((18 + i * 72) / 180 * Math.PI), 2 * Math.sin((18 + i * 72) / 180 * Math.PI));
+                cxt.lineTo(Math.cos((54 + i * 72) / 180 * Math.PI),Math.sin((54 + i * 72) / 180 * Math.PI));
+            }
+            cxt.closePath();
+        }
+
+        //  d为arcTo的控制点横坐标
+        function fillMoon (cxt, d, x, y, R, rot, fillColor) {
+            cxt.save()
+
+            cxt.translate(x, y);
+            cxt.rotate(rot * Math.PI / 180);
+            cxt.scale(R, R);
+            cxt.fillStyle = fillColor || '#fb5';
+
+            pathMoon(cxt, d);
+
+            cxt.fill();
+
+            cxt.restore();
+        }
+
+        function pathMoon(cxt, d) {
+            cxt.beginPath();
+            cxt.arc(0, 0, 1, 1.5 * Math.PI, 0.5 * Math.PI);
+            cxt.arcTo(d, 0, 0, -1, Math.sqrt(d * d + 1) / d);
+            cxt.closePath();
+        }
+
+        function drawLand (cxt, x0, y0, x1, y1, x2, y2, x3, y3 ) {
+            cxt.save();
+
+            var landColor = cxt.createLinearGradient(0, 600, 0, 0);
+            landColor.addColorStop(0, '#030');
+            landColor.addColorStop(1, '#580');
+            cxt.fillStyle = landColor;
+
+            cxt.beginPath();
+            cxt.moveTo(x0, y0);
+            cxt.bezierCurveTo(x1, y1, x2, y2, x3, y3);
+            cxt.lineTo(800, 600);
+            cxt.lineTo(0, 600);
+            cxt.closePath();
+
+            cxt.fill();
+
+            cxt.restore();
+        }
+
+        function fillText (cxt) {
+            cxt.save();
+
+            cxt.font = '60px Arial ';
+            cxt.fillStyle = '#fff';
+            var text = '夜晚';
+            cxt.fillText(text, 180, 510);
+
+            cxt.font = 'italic 30px Arial ';
+            cxt.fillText('---- make by Hansome', 360 + cxt.measureText(text).width, 550)
+
+            cxt.restore();
+        }
+        
+    </script>
+</body>
+</html>

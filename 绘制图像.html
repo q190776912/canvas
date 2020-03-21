@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        body {
+            background-color: #000;
+        }
+        canvas {
+            display: block;
+            margin: 10px auto;
+        }
+
+        input {
+            display: block;
+            width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <input type="range" min="0.2" max="0.6" step="0.01" value="0.3">
+    <canvas id='watermark' style="display: none"></canvas>
+    <canvas id="offCanvas" style="display: none"></canvas>
+    <script>
+        var canvas = document.querySelector('canvas');
+        var cxt = canvas.getContext('2d');
+        var slide = document.querySelector('input');
+        var img = new Image();
+        var isMousedown = false;
+        var imgW = 3840;    
+        var imgH = 2160;
+
+        var watermarkCanvas = document.querySelector('#watermark');
+        var watermarkCxt = watermarkCanvas.getContext('2d');
+
+        var offCanvas = document.querySelector('#offCanvas');
+        var offCxt = offCanvas.getContext('2d');
+
+        window.onload = function () {
+            canvas.width = 800;
+            canvas.height = 600;
+            img.src = './Sunrise.jpg';
+            img.onload = function () {
+                drawWatermark();
+                drawOffCanvas();
+                drawScaleImg(slide.value);
+                slide.onmousemove = function () {
+                    drawScaleImg(slide.value);
+                }
+                slide.onchange = function () {
+                    drawScaleImg(slide.value);
+                }
+            }
+        }
+
+        canvas.onmousedown = function (e) {
+            var point = getPoint(e.clientX, e.clientY);
+            isMousedown = true;
+            drawMagnifier(isMousedown, point, 100);
+        }
+
+        canvas.onmousemove = function (e) {
+            if (isMousedown) {
+                var point = getPoint(e.clientX, e.clientY);
+                drawMagnifier(isMousedown, point, 100)
+            }
+        }
+
+        canvas.onmouseup = function () {
+            isMousedown = false;
+            drawMagnifier(isMousedown);
+        }
+
+        function getPoint(x, y) {
+            var canvasPoint = canvas.getBoundingClientRect();
+            return {
+                x: x - canvasPoint.left,
+                y: y - canvasPoint.top
+            }
+        }
+
+        function drawScaleImg(scale) {
+            var imgWidth = imgW * scale ;
+            var imgHeight = imgH * scale;
+            cxt.clearRect(0, 0, canvas.width, canvas.height);
+            var imgX = (canvas.width - imgWidth) / 2;
+            var imgY = (canvas.height - imgHeight) / 2;
+            cxt.drawImage(img, imgX, imgY, imgWidth, imgHeight);
+            cxt.drawImage(watermarkCanvas, 
+                canvas.width - watermarkCanvas.width, 
+                canvas.height - watermarkCanvas.height
+            );
+        }
+
+        function drawWatermark() {
+            watermarkCanvas.width = 400;
+            watermarkCanvas.height = 100;
+            watermarkCxt.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            watermarkCxt.font = 'italic bold 40px Arial';
+            watermarkCxt.textAlign = 'center';
+            watermarkCxt.textBaseline = 'middle';
+            watermarkCxt.fillText('make by handsome', watermarkCanvas.width / 2, watermarkCanvas.height / 2);
+        }
+
+        function drawOffCanvas() {
+            offCanvas.width = imgW;
+            offCanvas.height = imgH;
+            offCxt.drawImage(img, 0, 0, offCanvas.width, offCanvas.height);
+        }
+
+        function drawMagnifier(flag, point, mr) {
+            drawScaleImg(slide.value);
+            if (flag) {
+                var mScale = offCanvas.width / imgW / slide.value;
+                var sx = (point.x + (imgW * slide.value - canvas.width) / 2) * mScale - mr;
+                var sy = (point.y + (imgH * slide.value - canvas.height) / 2) * mScale - mr;
+                var dx = point.x - mr;
+                var dy = point.y - mr;
+                cxt.save();
+                cxt.fillStyle = 'transplate';
+                cxt.strokeStyle = '#069';
+                cxt.lineWidth = 10;
+
+                cxt.beginPath();
+                cxt.arc(point.x, point.y, mr, 0, 2 * Math.PI);
+                cxt.fill();
+                cxt.stroke();
+
+                cxt.clip();
+
+                cxt.drawImage(offCanvas, sx, sy, 2 * mr, 2 * mr, dx, dy, 2 * mr, 2 * mr);
+                cxt.restore();
+            }
+        }
+
+    </script>
+</body>
+</html>

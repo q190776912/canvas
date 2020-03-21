@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        header,
+        h1,
+        a,
+        p,
+        canvas,
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        a {
+            text-decoration: none;
+            color: #000;
+        }
+        body {
+            font-size: 12px;
+            line-height: 1;
+        }
+
+        header {
+            display: block;
+            margin: 0 auto;
+            width: 300px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 60px;
+        }
+        #newGameBtn {
+            display: block;
+            margin: 10px auto;
+            width: 100px;
+            padding: 10px;
+            background-color: #8f7a66;
+            border-radius: 10px;
+            color: #fff;
+        }
+        #newGameBtn:hover {
+            background-color: #9f8b77;
+        }
+        header p {
+            font-size: 24px;
+            margin: 10px auto;
+        }
+        canvas {
+            display: block;
+            margin: 5px auto;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>2048</h1>
+        <a href="javascript: newGame();" id="newGameBtn">New Game</a>
+        <p>胜利条件：2048</p>
+        <span></span>
+    </header>
+    <canvas></canvas>
+    <script>
+        var canvas = document.querySelector('canvas');
+        var cxt = canvas.getContext('2d');
+        canvas.width = Math.min(500, window.screen.width - 16);
+        canvas.height = canvas.width;
+        var span = document.querySelector('span');
+        span.innerHTML = canvas.width == 500 ? '按方向键进行游戏' : '滑动屏幕进行游戏';
+        var score = 0;
+        var gameArr = [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+        ];
+        var color = [
+            '#ccc0b3', '#eee4da', '#ece0ca', '#f3b07b', '#ea8f52', '#f67c5c', 
+            '#ec5738', '#f6cf4d', '#e5c02a', '#e4b914', '#ecc400'
+        ];
+        var flag = true;
+
+        window.onload = function () {
+            render();
+        }
+
+        (function () {
+            var x = 0;
+            var y = 0;
+            var width = canvas.width;
+            var height = width;
+            var radius = 10;
+            var fillStyle = '#bbada0';
+            var rectWidth = width / 5;
+            var rectSpace = width / 25;
+            var rectHeight = rectWidth;
+            var rectRadius = 6;
+            function render() {
+                var newX = Math.floor(Math.random() * 4);
+                var newY = Math.floor(Math.random() * 4);
+                while (gameArr[newX][newY]) {
+                    newX = Math.floor(Math.random() * 4);
+                    newY = Math.floor(Math.random() * 4);
+                }
+                gameArr[newX][newY] = Math.ceil(Math.random() * 2) * 2;
+                drawRoundRect(x, y, width, height, radius, fillStyle);
+                for (let i = 0; i < 4; i++) {
+                    for (let j = 0; j < 4; j++) {
+                        drawRoundRect(
+                            x + rectSpace + j * width * 6 / 25, 
+                            y+ rectSpace + i * height * 6 / 25, 
+                            rectWidth, rectHeight, rectRadius, 
+                            color[gameArr[i][j] == 0 ? 0 : parseInt(Math.log2(gameArr[i][j]))], 
+                            gameArr[i][j]
+                        );
+                    }
+                }
+            }
+            window.render = render;
+        }());
+
+        window.onkeydown = function (e) {
+            e.preventDefault();
+            if (e.keyCode > 37 && e.keyCode <41) {
+                switch (e.keyCode) {
+                    case 38: // up
+                        upArr();
+                        break;
+                    case 40: // down
+                        downArr();
+                        break;
+                    case 37: // left
+                        leftArr();
+                        break;
+                    case 39: // right
+                        rightArr();
+                        break;
+                }
+                render();
+                result();
+            } 
+        }
+
+        var startTouch;
+        var endTouch;
+        canvas.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            var touch = e.touches[0];
+            startTouch = {x: touch.pageX, y: touch.pageY};
+            endTouch = startTouch;
+        }, false)
+
+        canvas.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            var touch = e.touches[0];
+            endTouch = {x: touch.pageX, y: touch.pageY};
+        })
+
+        canvas.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            var xChange = endTouch.x - startTouch.x;
+            var yChange = endTouch.y - startTouch.y;
+            if (endTouch.x != startTouch.x || endTouch.y != startTouch.y) {
+                if (Math.abs(xChange) > Math.abs(yChange)) {
+                    xChange > 0 ? rightArr() : leftArr();
+                }else {
+                    yChange > 0 ? downArr() : upArr();
+                }
+                render();
+                result();
+            }
+        }, false)
+
+        function upArr() {
+            justUp();
+            for (let i = 0; i < 3; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (gameArr[i][j] == gameArr[i+1][j]) {
+                        gameArr[i][j] *= 2;
+                        gameArr[i + 1][j] = 0;
+                    }
+                }
+            }
+            justUp();
+        }
+
+        function justUp() {
+            for (let i = 1; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (gameArr[i][j]) {
+                        for(let k = i; k > 0; k--) {
+                            if (gameArr[k - 1][j] == 0) {
+                                gameArr[k - 1][j] = gameArr[k][j];
+                                gameArr[k][j] = 0;
+                            }else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function downArr() {
+            justDown();
+            for (let i = 3; i > 0; i--) {
+                for (let j = 0; j < 4; j++) {
+                    if (gameArr[i][j] == gameArr[i - 1][j]) {
+                        gameArr[i][j] *= 2;
+                        gameArr[i - 1][j] = 0;
+                    }
+                }
+            }
+            justDown();
+        }
+
+        function justDown() {
+            for (let i = 2; i >= 0; i--) {
+                for (let j = 0; j < 4; j++) {
+                    if (gameArr[i][j]) {
+                        for(let k = i; k < 3; k++) {
+                            if (gameArr[k + 1][j] == 0) {
+                                gameArr[k + 1][j] = gameArr[k][j];
+                                gameArr[k][j] = 0;
+                            }else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function leftArr() {
+            justLeft();
+            for (let j = 0; j < 3; j++) {
+                for (let i = 0; i < 4; i++) {
+                    if (gameArr[i][j] === gameArr[i][j + 1]) {
+                        gameArr[i][j] *= 2;
+                        gameArr[i][j + 1] = 0;
+                    }
+                }
+            }
+            justLeft();
+        }
+
+        function justLeft() {
+            for (let j = 1; j < 4; j++) {
+                for (let i = 0; i < 4; i++) {
+                    if (gameArr[i][j]) {
+                        for(let k = j; k > 0; k--) {
+                            if (gameArr[i][k-1] == 0) {
+                                gameArr[i][k-1] = gameArr[i][k];
+                                gameArr[i][k] = 0;
+                            }else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function rightArr() {
+            justRight();
+            for (let j = 3; j > 0; j--) {
+                for (let i = 0; i < 4; i++) {
+                    if (gameArr[i][j] == gameArr[i][j - 1]) {
+                        gameArr[i][j] *= 2;
+                        gameArr[i][j - 1] = 0;
+                    }
+                }
+            }
+            justRight();
+        }
+
+        function justRight() {
+            for (let j = 2; j >= 0; j--) {
+                for (let i = 0; i < 4; i++) {
+                    if (gameArr[i][j]) {
+                        for(let k = j; k < 3; k++) {
+                            if (gameArr[i][k+1] == 0) {
+                                gameArr[i][k+1] = gameArr[i][k];
+                                gameArr[i][k] = 0;
+                            }else {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function newGame() {
+            gameArr = [
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0],
+                [0, 0, 0, 0]
+            ];
+            render();
+        }
+
+        function result() {
+            var sum = 0;
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 4; j++) {
+                    if (gameArr[i][j] == 2048) {
+                        return alert('你太牛了');
+                    }else if (gameArr[i][j]){
+                        sum++;
+                    }
+                }
+            }
+            if (sum == 16) {
+                return alert('你不行');
+            }
+        }
+        
+        function drawRoundRect (x, y, width, height, radius, fillStyle, num) {
+            cxt.save();
+
+            cxt.translate(x, y);
+
+            cxt.fillStyle = fillStyle || 'black';
+            pathRoundRect(width, height, radius);
+
+            cxt.fill();
+            
+            if (num) {
+                cxt.save();
+                cxt.font = "bold 48px Arial";
+                cxt.fillStyle = num <= 4 ? '#766b61' : '#fff';
+                cxt.textBaseline = "middle";
+                cxt.textAlign = "center";
+                cxt.fillText(num.toString(), width / 2, height / 2);
+                cxt.restore();
+            }
+            cxt.restore();
+
+        }
+
+        function pathRoundRect (width, height, radius) {
+            cxt.beginPath();
+            cxt.moveTo(0, 0);
+            cxt.arcTo(width, 0, width, height, radius);
+            cxt.arcTo(width, height, 0, height, radius);
+            cxt.arcTo(0, height, 0, 0, radius);
+            cxt.arcTo(0, 0, width, 0, radius);
+            cxt.closePath();
+        }
+
+    </script>
+</body>
+</html>

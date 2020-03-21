@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 10px auto;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <script>
+        var balls = [];
+        window.onload = function () {
+            var canvas = document.querySelector('canvas');
+            var cxt = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 600;
+            for (let i = 0; i < 66; i++) {
+                let R = Math.floor(Math.random() * 256);
+                let G = Math.floor(Math.random() * 256);
+                let B = Math.floor(Math.random() * 256);
+                let radius = Math.random() * 40 + 20;
+                balls[i] = {
+                    color: 'rgba(' + R + ',' + G + ',' + B + ')',
+                    r: radius,
+                    x: radius + Math.random() * (canvas.width - 2 * radius),
+                    y: radius + Math.random() * (canvas.height - 2 * radius),
+                    vx: (Math.random() * 8 + 8) * Math.pow(-1, Math.floor(Math.random() * 2)),
+                    vy: (Math.random() * 8 + 8) * Math.pow(-1, Math.floor(Math.random() * 2))
+                }
+            }
+            cxt.globalCompositeOperation = 'lighter';
+            setInterval(function () {
+                drawBalls(cxt);
+                update(canvas);
+            }, 50);
+        }
+
+        function drawBalls (cxt) {
+            var canvas = cxt.canvas;
+            cxt.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < balls.length; i++) {
+                cxt.save();
+                
+                cxt.fillStyle = balls[i].color;
+
+                cxt.beginPath();
+                cxt.arc(balls[i].x, balls[i].y, balls[i].r, 0, 2 * Math.PI);
+                cxt.closePath();
+
+                cxt.fill();
+
+                cxt.restore();
+            }
+        }
+
+        function update (canvas) {
+            for (let i = 0; i < balls.length; i++) {
+                balls[i].x += balls[i].vx;
+                balls[i].y += balls[i].vy;
+                if (balls[i].x + balls[i].r >= canvas.width) {
+                    balls[i].vx *= -1;
+                    balls[i].x = canvas.width - balls[i].r;
+                }
+                if (balls[i].x - balls[i].r<= 0) {
+                    balls[i].vx *= -1;
+                    balls[i].x =  balls[i].r;
+                }
+                if (balls[i].y + balls[i].r>= canvas.height) {
+                    balls[i].vy *= -1;
+                    balls[i].y = canvas.height - balls[i].r;
+                }
+                if (balls[i].y - balls[i].r<= 0) {
+                    balls[i].vy *= -1;
+                    balls[i].y =  balls[i].r;
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>

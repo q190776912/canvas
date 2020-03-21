@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        canvas {
+            /* canvas默认宽300px, 高150px
+            width: 300px;
+            height: 150px; 
+            */
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #000;
+        }
+    </style>
+</head>
+<body>
+    <canvas>当前浏览器不支持canvas，请更换浏览器再试</canvas>
+    <!-- canvas 是一个二维网格。canvas 的左上角坐标为 (0,0) -->
+    <script>
+        //  canvas 元素本身是没有绘图能力的。所有的绘制工作必须在 JavaScript 内部完成：
+        var canvas = document.querySelector('canvas')
+        canvas.width = 1024
+        canvas.height = 768
+        /*获取绘图工具
+        getContext("2d") 对象是内建的 HTML5 对象，拥有多种绘制路径、矩形、圆形、字符以及添加图像的方法。
+        */
+        var context = canvas.getContext('2d')
+
+        /*Canvas - 路径 //  画直线  
+            在Canvas上画线，我们将使用以下两种方法：
+            context.moveTo(x,y) 定义线条开始坐标    
+            context.lineTo(x,y) 定义线条结束坐标    //  通过写多次lineTo可以绘制折线，或绘制多边形
+            
+            context.fillStyle   着色的样式(一般写颜色)
+                //  color、gradient、image、canvas、video
+            context.strokeStyle 线条样式(一般写颜色)
+                //  fillStyle适用的样式都适用于strokeStyle
+
+            context.stroke()    绘制
+            context.fill()      着色
+
+            绘制多个路径：
+            每段路径开始添加：context.beginPath()
+                //  写了该条语句后，若不写moveTo语句, 默认第一条lineTo语句为moveTo
+
+            context.closePath()   //  结束当前路径，若路径不是封闭路径，则将路径封闭
+            //  不添加则不封闭路径
+                该两条语句成对出现可以绘制封闭图形，且不会存在瑕疵
+        */
+
+        /* 线条属性 
+            context.lineWidth  线条宽度
+
+            context.lineCup    线条两端形状的样式   // 不能用于线段连接处
+                butt(默认值)
+                round
+                square  //  可以解决封闭路径的瑕疵问题，但一般用closePath()
+
+            context.lineJoin    线条相交处形状样式
+                miter(默认值)
+                    context.miterLimit 
+                    // 这个值默认为10: 当内角和外角的距离超过 10 时, 多余的长度不显示
+                        (暂时这么理解，事实上 miterLimit 计算方式比较复杂)
+                bevel   斜边    //  像一条长纸条折叠后的效果(顶部平的)
+                round
+        */
+
+        /*绘制圆形  
+            context.arc(
+                centerX,centerY,    //  圆心坐标
+                radius,
+                startingAngle,endingAngle,  //  这里的角度以PI为单位, 下为0.5PI, 左为PI, 上为1.5PI,右为2PI
+                anticlosewise = false   //  默认为顺时针绘制
+            ) 
+            实际上我们在绘制圆形时使用了 "ink" 的方法, 比如 stroke() 或者 fill().
+                eg:
+                    var c=document.getElementById("myCanvas"); 
+                    var ctx=c.getContext("2d"); 
+                    ctx.beginPath(); 
+                    ctx.arc(95,50,40,0,2*Math.PI); 
+                    ctx.stroke();
+        */
+
+        /* 矩形与刷新
+            context.rect(x,y,width,height) 
+
+            context.clearRect(startX, startY, width, height)
+                // 对矩形空间内的画布进行清空操作，有刷新的效果
+
+            context.fillRect(x, y, width, height)   //  用fillStyle对矩形进行填充
+                //  也具有刷新画布的效果
+
+            context.strokeRect(x, y, width, height) //  用stoke对绘制矩形的边框
+        */
+
+        /* 图形变换 
+            translate(x, y) //  将基坐标(0, 0)移动至(x, y)
+                多次使用translate(x, y)会有叠加效果，故需要在每次使用之后结尾添加translate(-x, -y)语句
+                (或使用save(), restore()语句)
+
+            scale(sx, sy)   //  在横向进行sx倍的缩放，在纵向进行sy倍的缩放
+                副作用：还会缩放基点(x，y)的坐标，lineWidth也会缩放
+
+            skew(sx, sy)    
+                //  sx: 将画布在x方向上倾斜相应的角度，sx为倾斜角度的tan值
+                //  sy: 将画布在y方向上倾斜相应的角度，sy为倾斜角度的tan值
+
+            rotate(deg) //  deg为弧长表示
+
+            变换矩阵
+            |a   c   e|     a 水平缩放(1)  c 垂直倾斜(0)  e 水平位移(0)
+            |b   d   f|     b 水平倾斜(0)  d 垂直缩放(1)  f 垂直位移(0)
+            |0   0   1|     
+
+            tansform(a, b, c, d, e, f)  可以直接改变变换矩阵设置图形变换
+
+            setTransform(a, b, c, d, e, f)  忽略之前设置的变换，以此次变换为准
+        */
+
+        /* 状态保存与恢复
+            context.save()
+                保存之前环境状态
+
+            context.restore()
+                返回save()之前保存的所有环境状态
+            //  save和restore一般成对出现，中间可以随意更改状态而不影响后续状态
+        */
+
+        /*Canvas -  渐变  
+            线性渐变
+                var grd = context.createLinearGradient(xStart, yStart, xEnd, yEnd)  //  设置渐变线
+                grd.addColorStop(start, color1) start开始为 0
+                grd.addColorStop(stop, color2)  stop结束为 1    //  中间的色彩stop值可以改为(0,1)之间
+                context.fillStyle = grd //  将填充样式设为该渐变色
+                    eg: var c=document.getElementById("myCanvas"); 
+                        var ctx=c.getContext("2d"); 
+                        // Create gradient 
+                            var grd=ctx.createLinearGradient(0,0,200,0); 
+                            grd.addColorStop(0,"red"); 
+                            grd.addColorStop(1,"white"); 
+                        // Fill with gradient 
+                            ctx.fillStyle=grd; 
+                            ctx.fillRect(10,10,150,80);
+
+            径向渐变
+                var grd = context.createRadialGradient(x0, y0, r0, x1, y1, r1)  
+                    x0：表示渐变的开始圆的 x 坐标
+                    y0：表示渐变的开始圆的 y 坐标
+                    r0：表示开始圆的半径
+                    x1：表示渐变的结束圆的 x 坐标
+                    y1：表示渐变的结束圆的 y 坐标
+                    r1：表示结束圆的半径
+                grd.addColorStop(stop, color)...
+                context.fillStyle = grd
+                    eg: var c=document.getElementById("myCanvas"); 
+                        var ctx=c.getContext("2d"); 
+                        // Create gradient 
+                            var grd=ctx.createRadialGradient(75,50,5,90,60,100); 
+                            grd.addColorStop(0,"red"); 
+                            grd.addColorStop(1,"white"); 
+                        // Fill with gradient 
+                            ctx.fillStyle=grd; 
+                            ctx.fillRect(10,10,150,80);
+        */
+
+        /* 使用图片、画布或video 
+            context.createPattern(img, repeat-style)    // createPattern和css背景图片使用类似
+                eg: var backgroundImg = new Image();
+                    backgroundImg.src = '图片路径';
+                    var pattern = context.createPattern(backgroundImg, 'no-repeat');
+                    context.fillStyle = pattern;
+
+            context.createPattern(canvas, repeat-Style) //  第一个参数除了图片还可以填写 画布 作为背景图片
+
+            context.createPattern(video, repeat-style)  //  还可以把 视频 当成背景
+
+        */
+
+        /* 绘制曲线 
+            context.arc()
+
+            context.arcTo(x1, y1, x2, y2, radius)   //  (x1, y1)为控制点 (x2, y2)为结束点(曲线终点不一定为结束点)
+                (x0, y0)为其他线段结束点的坐标(arc,moveTo,lineTo结束点位置)
+                arcTo绘制一条与直线(x0,y0)(x1,y1)相切,且与另一条直线(x1,y1)(x2,y2)也相切，半径为radius的圆弧线
+        
+            贝塞尔曲线  Bezier
+                二次贝塞尔曲线  context.quadraticCurveTo(x1, y1, x2, y2)
+                    //  不同于arcTo, (x2, y2)就是二次贝塞尔曲线的终止点
+                三次贝塞尔曲线  context.bezierCurveTo(x1, y1, x2, y2, x3, y3)
+                    //  三次曲线为两个控制点, 1 和 2
+                    //  可以通过控制两个控制点的位置画出波浪线的效果，还可以绘制花瓣的效果
+
+            context.ellipse(x, y, radiusX, radiusY, rotation, startAngle, endAngle, anticlosewise)
+                //  绘制椭圆
+        */
+
+        /*Canvas - 文本渲染
+            context.font    //  可以设置5个值(最少需要font-size和font-family)
+                font-style
+                    normal(默认)
+                    italic  //  斜体字
+                    oblique //  倾斜字体
+                font-variant
+                    normal(默认)
+                    small-caps  //  大写字体写成小写书写模式
+                font-weight
+                    lighter
+                    normal(默认)    //  400
+                    bold    //  700
+                    bolder
+                    100~900
+                font-size
+                    20px(默认)
+                    2em
+                    150%
+                    xx-small
+                    x-small
+                    medium
+                    large
+                    x-large
+                    xx-large
+                font-family
+                    //  设置多种字体备选
+                    //  支持@font-face
+                    //  Web安全字体
+                eg: context.font = 'bold 40px Arial'
+
+            context.fillText(string, x, y， [maxlen])  
+                //  string是书写的字符串, (x, y)为位置 
+                //  [maxlen]可选，为string的最大宽度，string太多，会被强制压缩
+                
+            context.strokeText(string, x, y)    
+                //  书写string, 文字有描边
+
+            context.textAlign   //  文字基线位置，默认基线紧挨着文字最左边
+                left(默认)
+                center
+                right
+
+            context.textBaseline    //  文字基线位置，默认基线在英文字母x下方
+                top
+                middle
+                bottom
+                alphabetic(默认)    //  基于拉丁字母的语言
+                ideographic         //  基于方块文字, 比如汉字，日文等等(基线位于汉字下方)
+                hanging             //  基于印度语(基线大概在i上的点的位置)
+
+            context.measureText(string).width   
+                //  文本的度量，获取即将书写文本的宽度
+        */
+
+        /* 阴影
+            context.shadowColor
+            context.shadowOffsetX   //  阴影水平位移，向右为正
+            context.shadowOffsetY   //  阴影垂直位移，向下为正
+            context.shadowBlur  //  阴影模糊程度    越大越模糊
+        */
+
+        /* 全局透明度与全局重叠效果 
+            globalAlpha     //  全局透明度
+                //  默认值为1
+            globalCompositeOperation    //  重叠的时候产生的效果
+                source-over(默认)   //  覆盖，source指后绘制的图形，over是指叠在上面
+                destination-over    //  destination指先绘制的图形，这里先绘制的图形在上面
+
+                globalCompositeOperation属性值一览
+                    source-over     destination-over    ligter
+                    source-atop     destination-atop    copy
+                    source-in       destination-in      xor
+                    source-out      destination-out     
+
+                atop    //  底下的图形会划定一个界限，覆盖在上面的图形超过底下图形的部分会不显示(底下的图形会显示)
+                in  //  底下的图形会划定一个界限，覆盖在上面的图形超过底下图形的部分会不显示(底下的图形不会显示)
+                out //底下的图形会划定一个界限，覆盖在上面的图形不会显示，超过底下图形的部分会显示(底下的图形不会显示)
+                ligter  //  图形都会显示，但重叠部分的颜色会叠加
+                copy    //  只显示最后一个图形
+                xor     //  异或，重叠部分不显示
+        */
+
+        /* 剪辑区域 
+            context.clip()
+                clip之前需要绘制一次封闭的路径，接下来使用clip语句后，后面的内容在前一次封闭路径中显示
+                //  即 前一次绘制路径成为绘制环境
+                //  注意：若要实现动画效果，如果不用save，restore的话，接下来的绘制环境将仅在clip里面执行
+        */
+
+        /* 非零环绕原则 
+            图形区域内一点向外引一条射线，射线与图形的路径会有交点，定义一个方向为 1，另一个方向为 -1，
+            若每个交点上的1或-1的值相加的和，为 0 时意为在图形外面，若为非0意为在图形里面，
+            当使用fill()时，会对图形里面 (非0区域) 上色，图形外面 (0区域) 不上色
+        */
+
+        /* isPointInPath
+            context.isPointInPath(x, y)
+                //  如果(x, y)在上一次绘制的封闭路径内，则返回true
+        */
+
+        /* 扩充canvas的绘图函数 
+            CanvasRenderingContext2D    //  getContext('2d')的原型对象
+                //  可将自己写的绘制函数添加到该对象的原型中
+        */
+
+        /* 绘制图像 
+            context.drawImage(image, dx, dy, dw, dh)    //  dw, dh为可选参数, d 为 destination
+                //  一般写在image图像加载完之后，即 image.onload 中
+                
+            context.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh)
+                //  s 为 source, 为原图像内部的一小块图像的位置
+
+            离屏canvas
+                context.drawImage(canvas, dx, dy)   //  drawImage中可以传入canvas元素
+        */
+
+        /* 获取图像像素 
+            imageData = context.getImageData(x, y, w, h)
+                ImageData对象
+                    width
+                    height
+                    data    //  一个像素对应r g b a 四个值 (0~255)
+                        var pixelData = imageData.data
+                        第x行、第y列的像素
+                        i = x * width + y
+                        r —— pixelData[4 * i + 0]
+                        g —— pixelData[4 * i + 1]
+                        b —— pixelData[4 * i + 2]
+                        a —— pixelData[4 * i + 3]
+            
+            putImageData
+                context.putImageData(imageData, dx, dy, dirtyX, dirtyY, dirtyW, dirtyH)
+                    imageData最后位于(dx + dirtyX, dy + dirtyY)
+
+            灰度滤镜
+                var grey = r * 0.3 + g * 0.59 + b * 0.11    //  然后将灰度赋值给每r g b 即可实现灰度滤镜
+
+            黑白滤镜    //  只有白色和黑色的图像
+                在灰度滤镜的基础上 value = grey > 255 / 2 ? 255 : 0;    //  然后将value赋值给每r g b 即可
+
+            反色滤镜    //  照片底片式效果
+                //  将每个通道上的r g b 赋值 255-原来值，即可
+
+            模糊滤镜    
+                //  将一个点的像素值连同周围的8个点，共9个点，计算平均值后赋值给该像素
+                (因为关联到其他的像素点，故需要保留一个修改前的模板图像作参考)
+                //  若想更模糊，可设定一个模糊半径R，同样计算半径R内的像素点平均值
+
+            马赛克滤镜
+                与模糊滤镜相似，但赋值的不是一个像素，而是一个方格内的所有像素
+        */
+
+        /* 创建imageData 
+            imageData = context.createImageData(w, h)
+        */
+
+        /* 游戏架构 MVC   //  C 游戏逻辑   V  UI-HTML/CSS  M  游戏数据
+            //  C -> 动画效果逻辑 -> V  C -> 支撑逻辑 -> M
+        */
+    </script>
+</body>
+</html>

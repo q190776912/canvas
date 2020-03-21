@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <script>
+        var gameObjects = [], 
+            canvas = document.querySelector('canvas'), 
+            ctx = canvas.getContext('2d');
+        canvas.height = 480;
+        canvas.width = 640;
+
+        window.onload = function () {
+            gameObjects.push(cannon(50, canvas.height - 150));
+            setInterval(function () {
+                drawSkyAndGrass();
+                var gameObjectsFresh = [];
+                for (var i = 0; i < gameObjects.length; i++) {
+                    gameObjects[i].move();
+                    gameObjects[i].draw();
+                    if (gameObjects[i].removeMe === false) {
+                        gameObjectsFresh.push(gameObjects[i]);
+                    }
+                }
+                gameObjects = gameObjectsFresh;
+            }, 30);
+        }
+        
+        function vector2d(x, y) {
+            var vec = {
+                vx: x,
+                vy: y,
+                scale: function (scale) {
+                    vec.vx *= scale;
+                    vec.vy *= scale;
+                },
+                add: function (vec2) {
+                    vec.vx += vec2.vx;
+                    vec.vy += vec2.vy;
+                },
+                sub: function (vec2) {
+                    vec.vx -= vec2.vx;
+                    vec.vy -= vec2.vy;
+                },
+                negate: function () {
+                    vec.vx = -vec.vx;
+                    vec.vy = -vec.vy;
+                },
+                length: function () {
+                    return Math.sqrt(vec.vx * vec.vx + vec.vy * vec.vy);
+                },
+                lengthSquared: function () {
+                    return vec.vx * vec.vx + vec.vy * vec.vy;
+                },
+                normalize: function () {
+                    var len = Math.sqrt(vec.vx * vec.vx + vec.vy * vec.vy);
+                    if (len) {
+                        vec.vx /= len;
+                        vec.vy /= len;
+                    }
+                    return len;
+                },
+                rotate: function (angle) {
+                    var vx = vec.vx,
+                        vy = vec.vy,
+                        cosVal = Math.cos(angle),
+                        sinVal = Math.sin(angle);
+                    vec.vx = vx * cosVal - vy * sinVal;
+                    vec.vy = vx * sinVal + vy * cosVal;
+                },
+                toString: function () {
+                    return '(' + vec.vx.toFixed(3) + ',' + vec.vy.toFixed(3) + ')';
+                }
+            };
+            return vec;
+        };
+
+        function cannonBall(x, y, vector) {
+            var gravity = 0,
+                that = {
+                    x: x,
+                    y: y,
+                    removeMe: false,
+                    move: function () {
+                        vector.vy += gravity;
+                        gravity += 0.1;
+                        that.x += vector.vx;
+                        that.y += vector.vy;
+                        if (that.y > canvas.height - 150) {
+                            that.removeMe = true;
+                        }
+                    },
+                    draw: function () {
+                        ctx.beginPath();
+                        ctx.arc(that.x, that.y, 5, 0, Math.PI * 2, true);
+                        ctx.fill();
+                        ctx.closePath();
+                    }
+                };
+	        return that;
+        };
+
+        function cannon(x, y) {
+            var mx = 0,
+                my = 0,
+                angle = 0,
+                that = {
+                    x: x,
+                    y: y,
+                    angle: 0,
+                    removeMe: false,
+                    move: function () {
+                        angle = Math.atan2(my - that.y, mx - that.x);
+                    },
+                    draw: function () {
+                        ctx.save();
+                        ctx.lineWidth = 2;
+                        ctx.translate(that.x, that.y);
+                        ctx.rotate(angle);
+                        ctx.strokeRect(0, -5, 50, 10);
+                        ctx.moveTo(0, 0);
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 15, 0, Math.PI * 2, true);
+                        ctx.fill();
+                        ctx.closePath();
+                        ctx.restore();
+                    }
+                };
+
+            canvas.onmousedown = function (event) {
+                var vec = vector2d(mx - that.x, my - that.y);
+                vec.normalize();
+                vec.scale(25);
+                gameObjects.push(cannonBall(that.x, that.y, vec));
+            };
+
+            canvas.onmousemove = function (event) {
+                var bb = canvas.getBoundingClientRect();
+                mx = event.clientX - bb.left;
+                my = event.clientY - bb.top;
+            };
+            return that;
+        };
+
+        function drawSkyAndGrass() {
+            ctx.save();
+            ctx.globalAlpha = 1;
+            var linGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            linGrad.addColorStop(0, '#00BFFF');
+            linGrad.addColorStop(0.5, 'white');
+            linGrad.addColorStop(0.5, '#55dd00');
+            linGrad.addColorStop(1, 'white');
+            ctx.fillStyle = linGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        };
+    </script>
+</body>
+</html>

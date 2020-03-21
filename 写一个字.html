@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 10px auto;
+        }
+
+        button {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <button>清除</button>
+    <script>
+        var btn = document.querySelector('button');
+        var canvas = document.querySelector('canvas');
+        var cxt = canvas.getContext('2d');
+        canvas.width = Math.min(500, window.screen.width - 16);
+        canvas.height = canvas.width;
+        var isMove = false;
+        var lastLoc = {x: 0, y: 0};
+        var lastTimeStamp = 0;
+        var lastLineWidth = -1;
+
+        window.onload = function () {
+            drawGrid();
+        }
+
+        btn.onclick = function () {
+            cxt.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+        }
+
+        canvas.onmousemove = function (e) {
+            e.preventDefault();
+            strokeMove({x: e.clientX, y: e.clientY});
+        } 
+
+        canvas.onmouseout = function (e) {
+            e.preventDefault();
+            isMove = false;
+        } 
+
+        canvas.onmousedown = function (e) {
+            e.preventDefault();
+            strokeStart({x: e.clientX, y: e.clientY});
+        } 
+
+        canvas.onmouseup = function (e) {
+            e.preventDefault();
+            isMove = false;
+        } 
+
+        canvas.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            var touch = e.touches[0];
+            strokeStart({x: touch.pageX, y: touch.pageY});
+        }, false)
+
+        canvas.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            var touch = e.touches[0];
+            strokeMove({x: touch.pageX, y: touch.pageY});
+        }, false)
+
+        canvas.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            isMove = false;
+        })
+
+        function strokeStart(ePoint) {
+            isMove = true;
+            lastLoc = getPoint(ePoint.x, ePoint.y);
+            lastTimeStamp = new Date().getTime();
+        }
+
+        function strokeMove(ePoint) {
+            if (isMove) {
+                var point = getPoint(ePoint.x, ePoint.y);
+                var currentTimeStamp = new Date().getTime();
+                var t = currentTimeStamp - lastTimeStamp;
+                var s = distance(point, lastLoc);
+
+                cxt.save();
+                cxt.lineWidth = calLineWidth(s, t);
+                cxt.strokeStyle = '#000';
+                cxt.lineCap = 'round';
+                cxt.lineJoin = 'round';
+
+                cxt.beginPath();
+                cxt.moveTo(lastLoc.x, lastLoc.y);
+                cxt.lineTo(point.x, point.y);
+
+                cxt.stroke();
+                lastLoc = point; 
+                lastTimeStamp = currentTimeStamp;
+                lastLineWidth = cxt.lineWidth;
+                cxt.restore();
+            }
+        }
+
+        var distance = (point, lastLoc) => Math.sqrt((point.x - lastLoc.x) * (point.x - lastLoc.x) + (point.y - lastLoc.y) * (point.y - lastLoc.y))
+
+        var maxLineWidth = 20;
+        var minLineWidth = 1;
+        var maxStrokeV = 10;
+        var minStrokeV = 0.1;
+        var smoothValue = 0.70;
+        function calLineWidth(s, t) {
+            var resultLineWidth;
+            var v = s / t;
+            if (v > maxStrokeV) {
+                resultLineWidth = minLineWidth;
+            }else if (v < minStrokeV) {
+                resultLineWidth = maxLineWidth;
+            }else {
+                resultLineWidth = ((maxStrokeV - v) * maxLineWidth + (v - minStrokeV) * minLineWidth) / (minStrokeV + maxStrokeV);
+            }
+            return lastLineWidth == -1 ? 
+                resultLineWidth : 
+                resultLineWidth * (1 - smoothValue) + lastLineWidth * smoothValue;
+        }
+
+        function getPoint(x, y) {
+            var canvasRect = canvas.getBoundingClientRect();
+            return {x: x - canvasRect.left, y: y - canvasRect.top}
+        }
+
+        function drawGrid() {
+            cxt.save();
+
+            cxt.strokeStyle = 'red';
+            cxt.lineWidth = 6;
+            cxt.beginPath();
+            cxt.moveTo(3, 3);
+            cxt.lineTo(canvas.width - 3, 3);
+            cxt.lineTo(canvas.width - 3, canvas.width - 3);
+            cxt.lineTo(3, canvas.width - 3);
+            cxt.closePath();
+            cxt.stroke();
+
+            cxt.lineWidth = 1;
+            cxt.beginPath();
+            for (let i = 1; i <= (canvas.width - 6) / 2; i++) {
+                i % 2 == 1 ? cxt.moveTo(3 * i, 3 * i) : cxt.lineTo(3 * i, 3 * i);
+            }
+            for (let i = 1;i <= (canvas.width - 6) / 2; i++) {
+                i % 2 == 1 ? cxt.moveTo(canvas.width - 3 * i, 3 * i) : cxt.lineTo(canvas.width - 3 * i, 3 * i);
+            }
+            for (let i = 1;i <= (canvas.width - 6) / 2; i++) {
+                i % 2 == 1 ? cxt.moveTo(canvas.width / 2, 3 * i) : cxt.lineTo(canvas.width / 2, 3 * i);
+            }
+            for (let i = 1;i <= (canvas.width - 6) / 2; i++) {
+                i % 2 == 1 ? cxt.moveTo(3 * i, canvas.width / 2) : cxt.lineTo(3 * i, canvas.width / 2);
+            }
+            cxt.stroke();
+
+            cxt.restore();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        canvas {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #eee;
+            box-sizing: border-box;
+        }
+        p {
+            position: fixed;
+        }
+    </style>
+</head>
+<body>
+    <canvas>该浏览器不支持canvas显示，推荐使用谷歌浏览器</canvas>
+    <p>地雷：</p>
+    <script>
+        var canvas = document.querySelector('canvas');
+        var p = document.querySelector('p');    //  获取p标签记录剩余地雷数
+        var cxt = canvas.getContext('2d');
+        const level = 20; //  20阶地雷阵
+        const mineNum = 99;   //  地雷数
+        const colors = ["#33B5E5","#0099CC","#AA66CC","#9933CC","#99CC00","#669900","#FFBB33","#FF8800"];
+        const success = level ** 2 - mineNum;
+        var sum = 0;    //  当 sum 等于 success 即获得胜利
+        var grids = null;    //  棋盘格子
+        var lastPoint = null;   //  鼠标抬起最后一个点的坐标，3个属性，x、y、buttons(1 鼠标左键、2 鼠标右键、3 鼠标左右键同时按下)
+        var press = null;   //  当前按下的格子，2个属性，row、col
+        var mousedown = false;  //  判断鼠标是否按下
+        var gameStart = false;  //  判断游戏是否开始，主要用来避免第一次点击踩雷的情况
+        var gameStop = false;   //  游戏结束
+        var flag = 0;   //  插旗数
+
+        window.onload = function () {
+            init();
+        }
+
+        window.onresize = function () {
+            style();
+            render();
+        }
+
+        canvas.oncontextmenu = function (e) {
+            e.preventDefault();
+        }
+
+        canvas.onmousedown = function (e) {
+            if (gameStop) return;
+            mousedown = true;
+            if (e.buttons > 0 && e.buttons < 4) {
+                console.log(e.buttons);
+                var canvasRect = canvas.getBoundingClientRect();
+                lastPoint = {
+                    x: e.clientX - canvasRect.left,
+                    y: e.clientY - canvasRect.top,
+                    buttons: e.buttons,
+                };
+                //  不设置定时器获取的e.button == 3无法及时给lastPoint.buttons赋值
+                setTimeout (function () {
+                    if (lastPoint.buttons !== 2){
+                        drawPressGrid();
+                    }else {
+                        press = {
+                            col: Math.floor(lastPoint.x * level / canvas.width),
+                            row: Math.floor(lastPoint.y * level / canvas.height)
+                        }
+                    }
+                }, 20);
+            }
+        }
+
+        canvas.onmousemove = function (e) {
+            if (mousedown) {
+                var canvasRect = canvas.getBoundingClientRect();
+                lastPoint.x = e.clientX - canvasRect.left;
+                lastPoint.y = e.clientY - canvasRect.top;
+                if (lastPoint.buttons !== 2){
+                    drawPressGrid();
+                }else {
+                    press = {
+                        col: Math.floor(lastPoint.x * level / canvas.width),
+                        row: Math.floor(lastPoint.y * level / canvas.height)
+                    }
+                }
+            }
+        }
+
+        canvas.onmouseup = function () {
+            if (mousedown) {
+                //  让第一次点击到空白区域
+                if (!gameStart) {
+                    if (grids[press.row][press.col].mine !== 0) {
+                        while (grids[press.row][press.col].mine !== 0) {
+                            KnuthRandom();
+                        }
+                    }
+                    gameStart = true;
+                }
+                switch (lastPoint.buttons) {
+                    case 1: 
+                        if (!grids[press.row][press.col].show && grids[press.row][press.col].mark === 0) {
+                            clickGrid(press.row, press.col);
+                        }
+                        break;
+                    case 2: 
+                        if (!grids[press.row][press.col].show) {
+                            if (grids[press.row][press.col].mark === 1) {
+                                flag--;
+                            }
+                            grids[press.row][press.col].mark = ++grids[press.row][press.col].mark % 3;
+                            if (grids[press.row][press.col].mark === 1) {
+                                flag++;
+                            }
+                        }
+                        break;
+                    case 3: 
+                        if (grids[press.row][press.col].show) {
+                            let flag = 0;   //  周围插旗的数量
+                            nineBlockBox(press.row, press.col, function (ele) {
+                                if (!ele.show && ele.mark === 1) {
+                                    flag++;
+                                }
+                            });
+                            if (flag === grids[press.row][press.col].mine) {
+                                nineBlockBox(press.row, press.col, function (ele, i, j) {
+                                    if (!ele.show && ele.mark !== 1) {
+                                        clickGrid(i, j);
+                                    }
+                                });
+                            }
+                        }
+                        break;
+                }
+                render();
+                mousedown = false;
+                lastPoint = null;
+                press = {
+                    row: -1,
+                    col: -1
+                };
+            }
+        }
+
+        //  设置canvas样式及p标签样式
+        function style() {
+            canvas.width = Math.min(window.innerWidth, window.innerHeight);
+            canvas.height = canvas.width;
+            var canvasRect = canvas.getBoundingClientRect();
+            p.innerHTML = '地雷数：' + (mineNum - flag);
+            p.style.top = 0;
+            p.style.left = canvasRect.right + 'px';
+        }
+
+        //  初始化函数
+        function init() {
+            style();
+            clearAll();
+            createMine(mineNum);
+            render();
+            p.innerHTML = '地雷数：' + mineNum;
+        }
+
+        //  渲染整个canvas
+        function render() {
+            p.innerHTML = '地雷数：' + (mineNum - flag);
+            cxt.clearRect(0, 0, canvas.width, canvas.height);
+            gridsArr(function (ele, i, j) {
+                drawGrid(i, j);
+            })
+        }
+
+        //  清空函数
+        function clearAll() {
+            sum = 0;
+            lastPoint = null;
+            press =  {
+                row: -1,
+                col: -1
+            };  //  开始设置为-1
+            flag = 0;
+            gameStop = false;
+            gameStart = false;
+            grids = new Array(level);
+            for (let i = 0; i < grids.length; i++){
+                grids[i] = new Array(level);
+                for (let j = 0; j < grids[i].length; j++){
+                    grids[i][j] = {
+                        mine: 0,   //  -1为雷，其他数字为周围雷的个数
+                        show: false,    //  是否被点击过
+                        mark: 0 //  0是无样式，1是插旗子，2是问号
+                    }
+                }
+            }
+        }
+
+        //  绘制一整个格子
+        function drawGrid(row, col, click) {
+            var s = canvas.width / level;   //  格子边长
+            var x = col * s;
+            var y = row * s;
+            var border = s / 20;
+            if (grids[row][col].show) {
+                fillRect(x, y, s, '#eee');
+                if (grids[row][col].mine === -1) {
+                    drawMine(x + border , y + border, s - border * 2, click);
+                }else if(grids[row][col].mine === 0){
+                    fillRect(x + border , y + border, s - border * 2, '#ccc');
+                }else {
+                    let n = grids[row][col].mine;
+                    fillRect(x + border , y + border, s - border * 2, '#ccc');
+                    drawText(n.toString(), x, y, s, colors[n - 1]);
+                }
+            }else {
+                fillGrid(x, y, s, border);
+                if (grids[row][col].mark === 1) {
+                    drawFlag(x, y, s);
+                }else if (grids[row][col].mark === 2) {
+                    drawText('?', x, y, s, 'black');
+                }
+            }
+        }
+
+        //  绘制按下按钮时的格子
+        function drawPressGrid() {
+            var col = Math.floor(lastPoint.x * level / canvas.width);
+            var row = Math.floor(lastPoint.y * level / canvas.height);
+            if (!(press.row === row && press.col === col)) {
+                let s = canvas.width / level;   //  格子边长
+                let border = s / 5;
+                press = {row, col};
+                render();
+                if (lastPoint.buttons === 3) {
+                    nineBlockBox(press.row, press.col, function (ele, i, j) {
+                        if (!ele.show && ele.mark === 0) {
+                            fillGrid(j * s, i * s, s, border);
+                        }
+                    })
+                }else if (!grids[row][col].show && grids[row][col].mark === 0) {
+                    fillGrid(col * s, row * s, s, border);
+                }
+            }
+        }
+
+        //  判断胜利函数
+        function winOrlose(lose, row, col) {
+            if (lose) {
+                gridsArr(function (ele) {
+                    if (ele.mine === -1) {
+                        ele.show = true;
+                    }
+                });
+                render();
+                setTimeout(function () {
+                    drawGrid(row, col, lose);
+                }, 5);
+                setTimeout(function () {
+                    confirm('你输了，再来一次吗') ? window.onload() : gameStop = true;
+                },30);
+                
+                return;
+            }
+            if (sum === success) {
+                render();
+                setTimeout(function () {
+                    confirm('你太强了，再来一次吗') ? window.onload() : gameStop = true;
+                },30);
+            }
+        }
+
+        //  点击格子改变格子状态函数
+        function clickGrid(row, col) {
+            if (grids[row] && grids[row][col] && !grids[row][col].show && grids[row][col].mark === 0) {
+                grids[row][col].show = true;
+                if (grids[row][col].mine === -1) {
+                    winOrlose(true, row, col);
+                }else if (grids[row][col].mine === 0) {
+                    sum++;
+                    nineBlockBox(row, col, function (ele, i, j) {
+                        clickGrid(i, j);
+                    });
+                }else {
+                    sum++;
+                    winOrlose();
+                }
+            }
+        }
+
+        //  绘制地雷
+        function drawMine(x, y, s, click) {
+            fillRect(x, y, s, click ? 'red' : '#ccc');
+            drawMineSegment(x + s / 2, y + s / 2, s * 3 / 10, 0);
+            drawMineSegment(x + s / 2, y + s / 2, s * 3 / 10, Math.PI / 4);
+        }
+
+        //  绘制地雷的一部分（黑色四角星）
+        function drawMineSegment(centerX, centerY, r, deg) {
+            cxt.save();
+            cxt.translate(centerX, centerY);
+            cxt.rotate(deg);
+            cxt.fillStyle = 'black';
+            cxt.beginPath();
+            cxt.lineTo(0, -r);
+            cxt.arcTo(0, 0, -r, 0, r);
+            cxt.arcTo(0, 0, 0, r, r);
+            cxt.arcTo(0, 0, r, 0, r);
+            cxt.arcTo(0, 0, 0, -r, r);
+            cxt.closePath();
+            cxt.fill();
+            cxt.restore();
+        }
+
+        //  绘制一个格子背景
+        function fillGrid(x, y, s, border) {
+            fillRect(x, y, s, '#33B5E5');
+            fillRect(x + border , y + border, s - border * 2, '#0099CC');
+        }
+
+        //  绘制矩形
+        function fillRect(x, y, s, color) {
+            cxt.save();
+            cxt.fillStyle = color;
+            cxt.fillRect(x, y, s, s);
+            cxt.restore();
+        }
+
+        //  绘制文字
+        function drawText(text, x, y, s, color) {
+            cxt.save();
+            cxt.font = 'bold '+ s / 1.5 +'px Arial';
+            cxt.fillStyle = color;
+            cxt.textAlign = "center";
+            cxt.textBaseline = "middle";
+            cxt.fillText(text, x + s / 2, y + s / 2);
+            cxt.restore();
+        }
+
+        //  绘制小旗子  
+        function drawFlag(x, y, s) {
+            cxt.save();
+            cxt.fillStyle = 'red';
+            cxt.strokeStyle = 'black';
+            cxt.beginPath();
+            cxt.lineTo(x + s / 3, y + s * 4 / 5);
+            cxt.lineTo(x + s / 3, y + s / 5);
+            cxt.lineTo(x + s * 2 / 3, y + s / 2);
+            cxt.lineTo(x + s / 3, y + s / 2);
+            cxt.closePath();
+            cxt.fill();
+            cxt.stroke();
+            cxt.restore();
+        }
+
+        //  创建地雷
+        function createMine(n) {
+            for (var i = 0; i < Math.floor(n / level); i++) {
+                for (let j = 0; j < grids[i].length; j++) {
+                    grids[i][j].mine = -1;
+                }
+            }
+            for (let j = 0; j < n % level; j++){
+                grids[i][j].mine = -1;
+            }
+            KnuthRandom();
+        }
+
+        //  Knuth 洗牌算法
+        function KnuthRandom() {
+            for (let j = grids.length ** 2 - 1; j >= 0; j--) {
+                let row1 = Math.floor(j / level), col1 = j % level;
+                let random = Math.floor(Math.random() * j);
+                let row2 = Math.floor(random / level), col2 = random % level;
+                [grids[row1][col1], grids[row2][col2]] = [grids[row2][col2], grids[row1][col1]];
+            }
+            gridsArr(function (ele, i, j) {
+                if (ele.mine !== -1) {
+                    let sum = 0;
+                    nineBlockBox(i, j, function (ele) {
+                        if (ele.mine === -1) {
+                            sum++;
+                        }
+                    });
+                    ele.mine = sum;
+                }
+            });
+        }
+
+        //  九宫格循环遍历
+        function nineBlockBox(row, col, callback) {
+            for (let i = row - 1; i <= row + 1; i++) {
+                for (let j = col - 1; j <= col + 1; j++) {
+                    if (grids[i] && grids[i][j]) {
+                        callback(grids[i][j], i, j);
+                    }
+                }
+            }
+        }
+
+        //  grid函数循环遍历
+        function gridsArr(callback) {
+            for (let i = 0; i < grids.length; i++) {
+                for (let j = 0; j < grids[i].length; j++) {
+                    callback(grids[i][j], i, j);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

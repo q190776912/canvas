@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>我帅的不行</title>
+    <style>
+        canvas {
+            display: block;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <script>
+        var lamp;
+        window.onload = function () {
+            var canvas = document.querySelector('canvas');
+            var cxt = canvas.getContext('2d');
+            canvas.width = 800;
+            canvas.height = 600;
+            var radius = Math.random() * 100 + 80;
+            lamp = {
+                color: '#fff',
+                r: radius,
+                x: radius + Math.random() * (canvas.width - 2 * radius),
+                y: radius + Math.random() * (canvas.height - 2 * radius),
+                vx: (Math.random() * 8 + 8) * Math.pow(-1, Math.floor(Math.random() * 2)),
+                vy: (Math.random() * 8 + 8) * Math.pow(-1, Math.floor(Math.random() * 2))
+            }
+            setInterval(function () {
+                draw(cxt);
+                updata(canvas);
+            }, 50);
+        }
+
+        function draw (cxt) {
+            var canvas = cxt.canvas;
+            cxt.fillStyle = 'balck';
+            cxt.fillRect(0, 0, canvas.width, canvas.height);
+            cxt.save();
+            cxt.save();
+
+            cxt.beginPath();
+            cxt.fillStyle = lamp.color;
+            cxt.arc(lamp.x, lamp.y, lamp.r, 0, 2 * Math.PI);
+            cxt.fill();
+
+            cxt.restore();
+            cxt.clip();
+
+            cxt.font = 'bold 100px Arial';
+            cxt.fillStyle = '#058';
+            cxt.textAlign = 'center';
+            cxt.textBaseline = 'center';
+            cxt.fillText('我', canvas.width / 2, canvas.height / 4);
+            cxt.fillText('真的', canvas.width / 2, canvas.height / 2);
+            cxt.fillText('好帅', canvas.width / 2, canvas.height * 3 / 4);
+
+            cxt.restore();
+        }
+
+        function updata(canvas) {
+            lamp.x += lamp.vx;
+            lamp.y += lamp.vy;
+            if (lamp.x <= lamp.r) {
+                lamp.vx *= -1;
+                lamp.x = lamp.r;
+            }
+            if (lamp.x >= canvas.width - lamp.r) {
+                lamp.vx *= -1;
+                lamp.x = canvas.width - lamp.r;
+            }
+            if (lamp.y <= lamp.r) {
+                lamp.vy *= -1;
+                lamp.y = lamp.r;
+            }
+            if (lamp.y >= canvas.height - lamp.r) {
+                lamp.vy *= -1;
+                lamp.y = canvas.height - lamp.r;
+            }
+        }
+    </script>
+</body>
+</html>
