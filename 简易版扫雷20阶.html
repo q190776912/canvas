@@ -25,21 +25,21 @@
     <canvas>该浏览器不支持canvas显示，推荐使用谷歌浏览器</canvas>
     <p>地雷：</p>
     <script>
-        var canvas = document.querySelector('canvas');
-        var p = document.querySelector('p');    //  获取p标签记录剩余地雷数
-        var cxt = canvas.getContext('2d');
+        let canvas = document.querySelector('canvas');
+        let p = document.querySelector('p');    //  获取p标签记录剩余地雷数
+        let cxt = canvas.getContext('2d');
         const level = 20; //  20阶地雷阵
         const mineNum = 99;   //  地雷数
         const colors = ["#33B5E5","#0099CC","#AA66CC","#9933CC","#99CC00","#669900","#FFBB33","#FF8800"];
         const success = level ** 2 - mineNum;
-        var sum = 0;    //  当 sum 等于 success 即获得胜利
-        var grids = null;    //  棋盘格子
-        var lastPoint = null;   //  鼠标抬起最后一个点的坐标，3个属性，x、y、buttons(1 鼠标左键、2 鼠标右键、3 鼠标左右键同时按下)
-        var press = null;   //  当前按下的格子，2个属性，row、col
-        var mousedown = false;  //  判断鼠标是否按下
-        var gameStart = false;  //  判断游戏是否开始，主要用来避免第一次点击踩雷的情况
-        var gameStop = false;   //  游戏结束
-        var flag = 0;   //  插旗数
+        let sum = 0;    //  当 sum 等于 success 即获得胜利
+        let grids = null;    //  棋盘格子
+        let lastPoint = null;   //  鼠标抬起最后一个点的坐标，3个属性，x、y、buttons(1 鼠标左键、2 鼠标右键、3 鼠标左右键同时按下)
+        let press = null;   //  当前按下的格子，2个属性，row、col
+        let mousedown = false;  //  判断鼠标是否按下
+        let gameStart = false;  //  判断游戏是否开始，主要用来避免第一次点击踩雷的情况
+        let gameStop = false;   //  游戏结束
+        let flag = 0;   //  插旗数
 
         window.onload = function () {
             init();
@@ -58,30 +58,26 @@
             if (gameStop) return;
             mousedown = true;
             if (e.buttons > 0 && e.buttons < 4) {
-                console.log(e.buttons);
-                var canvasRect = canvas.getBoundingClientRect();
+                let canvasRect = canvas.getBoundingClientRect();
                 lastPoint = {
                     x: e.clientX - canvasRect.left,
                     y: e.clientY - canvasRect.top,
                     buttons: e.buttons,
                 };
-                //  不设置定时器获取的e.button == 3无法及时给lastPoint.buttons赋值
-                setTimeout (function () {
-                    if (lastPoint.buttons !== 2){
-                        drawPressGrid();
-                    }else {
-                        press = {
-                            col: Math.floor(lastPoint.x * level / canvas.width),
-                            row: Math.floor(lastPoint.y * level / canvas.height)
-                        }
+                if (lastPoint.buttons !== 2){
+                    drawPressGrid();
+                }else {
+                    press = {
+                        col: Math.floor(lastPoint.x * level / canvas.width),
+                        row: Math.floor(lastPoint.y * level / canvas.height)
                     }
-                }, 20);
+                }
             }
         }
 
         canvas.onmousemove = function (e) {
             if (mousedown) {
-                var canvasRect = canvas.getBoundingClientRect();
+                let canvasRect = canvas.getBoundingClientRect();
                 lastPoint.x = e.clientX - canvasRect.left;
                 lastPoint.y = e.clientY - canvasRect.top;
                 if (lastPoint.buttons !== 2){
@@ -155,7 +151,7 @@
         function style() {
             canvas.width = Math.min(window.innerWidth, window.innerHeight);
             canvas.height = canvas.width;
-            var canvasRect = canvas.getBoundingClientRect();
+            let canvasRect = canvas.getBoundingClientRect();
             p.innerHTML = '地雷数：' + (mineNum - flag);
             p.style.top = 0;
             p.style.left = canvasRect.right + 'px';
@@ -232,22 +228,20 @@
 
         //  绘制按下按钮时的格子
         function drawPressGrid() {
-            var col = Math.floor(lastPoint.x * level / canvas.width);
-            var row = Math.floor(lastPoint.y * level / canvas.height);
-            if (!(press.row === row && press.col === col)) {
-                let s = canvas.width / level;   //  格子边长
-                let border = s / 5;
-                press = {row, col};
-                render();
-                if (lastPoint.buttons === 3) {
-                    nineBlockBox(press.row, press.col, function (ele, i, j) {
-                        if (!ele.show && ele.mark === 0) {
-                            fillGrid(j * s, i * s, s, border);
-                        }
-                    })
-                }else if (!grids[row][col].show && grids[row][col].mark === 0) {
-                    fillGrid(col * s, row * s, s, border);
-                }
+            let col = Math.floor(lastPoint.x * level / canvas.width);
+            let row = Math.floor(lastPoint.y * level / canvas.height);
+            let s = canvas.width / level;   //  格子边长
+            let border = s / 5;
+            press = {row, col};
+            render();
+            if (lastPoint.buttons === 3) {
+                nineBlockBox(press.row, press.col, function (ele, i, j) {
+                    if (!ele.show && ele.mark === 0) {
+                        fillGrid(j * s, i * s, s, border);
+                    }
+                })
+            }else if (!grids[row][col].show && grids[row][col].mark === 0) {
+                fillGrid(col * s, row * s, s, border);
             }
         }
 
