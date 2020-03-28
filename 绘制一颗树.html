@@ -44,8 +44,8 @@
             let newLength, newAngle, subBranches;
             //  depth < 3为树叶，绿色, 其余是树枝，棕色
             ctx.strokeStyle = depth < 3 ? 
-                'rgb(0, ' + ((Math.random() * 64 + 128) >> 0) + ', 0)' : 
-                'rgb(' + ((Math.random() * 64 + 64) >> 0) + ', 50, 25)';
+                `rgb(0, ${(Math.random() * 64 + 128) >> 0}, 0)` : 
+                `rgb(${(Math.random() * 64 + 64) >> 0}, 50, 25)`;
             ctx.lineCap = 'round';
             ctx.lineWidth = branchWidth;
             ctx.beginPath();
