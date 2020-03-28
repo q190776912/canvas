@@ -66,7 +66,7 @@
                 };
                 if (lastPoint.buttons !== 2){
                     drawPressGrid();
-                }else {
+                } else {
                     press = {
                         col: Math.floor(lastPoint.x * level / canvas.width),
                         row: Math.floor(lastPoint.y * level / canvas.height)
@@ -82,7 +82,7 @@
                 lastPoint.y = e.clientY - canvasRect.top;
                 if (lastPoint.buttons !== 2){
                     drawPressGrid();
-                }else {
+                } else {
                     press = {
                         col: Math.floor(lastPoint.x * level / canvas.width),
                         row: Math.floor(lastPoint.y * level / canvas.height)
@@ -209,18 +209,18 @@
                 fillRect(x, y, s, '#eee');
                 if (grids[row][col].mine === -1) {
                     drawMine(x + border , y + border, s - border * 2, click);
-                }else if(grids[row][col].mine === 0){
+                } else if(grids[row][col].mine === 0){
                     fillRect(x + border , y + border, s - border * 2, '#ccc');
-                }else {
+                } else {
                     let n = grids[row][col].mine;
                     fillRect(x + border , y + border, s - border * 2, '#ccc');
                     drawText(n.toString(), x, y, s, colors[n - 1]);
                 }
-            }else {
+            } else {
                 fillGrid(x, y, s, border);
                 if (grids[row][col].mark === 1) {
                     drawFlag(x, y, s);
-                }else if (grids[row][col].mark === 2) {
+                } else if (grids[row][col].mark === 2) {
                     drawText('?', x, y, s, 'black');
                 }
             }
@@ -240,7 +240,7 @@
                         fillGrid(j * s, i * s, s, border);
                     }
                 })
-            }else if (!grids[row][col].show && grids[row][col].mark === 0) {
+            } else if (!grids[row][col].show && grids[row][col].mark === 0) {
                 fillGrid(col * s, row * s, s, border);
             }
         }
@@ -277,12 +277,12 @@
                 grids[row][col].show = true;
                 if (grids[row][col].mine === -1) {
                     winOrlose(true, row, col);
-                }else if (grids[row][col].mine === 0) {
+                } else if (grids[row][col].mine === 0) {
                     sum++;
                     nineBlockBox(row, col, function (ele, i, j) {
                         clickGrid(i, j);
                     });
-                }else {
+                } else {
                     sum++;
                     winOrlose();
                 }
