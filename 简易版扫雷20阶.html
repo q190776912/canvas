@@ -122,13 +122,13 @@
                     case 3: 
                         if (grids[press.row][press.col].show) {
                             let flag = 0;   //  周围插旗的数量
-                            nineBlockBox(press.row, press.col, function (ele) {
+                            nineBlockBox(press.row, press.col, (ele) => {
                                 if (!ele.show && ele.mark === 1) {
                                     flag++;
                                 }
                             });
                             if (flag === grids[press.row][press.col].mine) {
-                                nineBlockBox(press.row, press.col, function (ele, i, j) {
+                                nineBlockBox(press.row, press.col, (ele, i, j) => {
                                     if (!ele.show && ele.mark !== 1) {
                                         clickGrid(i, j);
                                     }
@@ -170,7 +170,7 @@
         function render() {
             p.innerHTML = '地雷数：' + (mineNum - flag);
             cxt.clearRect(0, 0, canvas.width, canvas.height);
-            gridsArr(function (ele, i, j) {
+            gridsArr((ele, i, j) => {
                 drawGrid(i, j);
             })
         }
@@ -201,10 +201,10 @@
 
         //  绘制一整个格子
         function drawGrid(row, col, click) {
-            var s = canvas.width / level;   //  格子边长
-            var x = col * s;
-            var y = row * s;
-            var border = s / 20;
+            let s = canvas.width / level;   //  格子边长
+            let x = col * s;
+            let y = row * s;
+            let border = s / 20;
             if (grids[row][col].show) {
                 fillRect(x, y, s, '#eee');
                 if (grids[row][col].mine === -1) {
@@ -235,7 +235,7 @@
             press = {row, col};
             render();
             if (lastPoint.buttons === 3) {
-                nineBlockBox(press.row, press.col, function (ele, i, j) {
+                nineBlockBox(press.row, press.col, (ele, i, j) => {
                     if (!ele.show && ele.mark === 0) {
                         fillGrid(j * s, i * s, s, border);
                     }
@@ -254,10 +254,10 @@
                     }
                 });
                 render();
-                setTimeout(function () {
+                setTimeout(() => {
                     drawGrid(row, col, lose);
                 }, 5);
-                setTimeout(function () {
+                setTimeout(() => {
                     confirm('你输了，再来一次吗') ? window.onload() : gameStop = true;
                 },30);
                 
@@ -265,7 +265,7 @@
             }
             if (sum === success) {
                 render();
-                setTimeout(function () {
+                setTimeout(() => {
                     confirm('你太强了，再来一次吗') ? window.onload() : gameStop = true;
                 },30);
             }
@@ -279,7 +279,7 @@
                     winOrlose(true, row, col);
                 } else if (grids[row][col].mine === 0) {
                     sum++;
-                    nineBlockBox(row, col, function (ele, i, j) {
+                    nineBlockBox(row, col, (ele, i, j) => {
                         clickGrid(i, j);
                     });
                 } else {
@@ -375,10 +375,10 @@
                 let row2 = Math.floor(random / level), col2 = random % level;
                 [grids[row1][col1], grids[row2][col2]] = [grids[row2][col2], grids[row1][col1]];
             }
-            gridsArr(function (ele, i, j) {
+            gridsArr((ele, i, j) => {
                 if (ele.mine !== -1) {
                     let sum = 0;
-                    nineBlockBox(i, j, function (ele) {
+                    nineBlockBox(i, j, (ele) => {
                         if (ele.mine === -1) {
                             sum++;
                         }
